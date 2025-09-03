@@ -8,16 +8,19 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # Tailwind CSS version (renovate: datasource=github-releases depName=tailwindlabs/tailwindcss)
 ARG TAILWIND_VERSION=v4.1.12
+ARG TARGETPLATFORM
 
-# Install architecture-specific Tailwind CSS
-RUN case "$(uname -m)" in \
-    x86_64) \
-        curl -L https://github.com/tailwindlabs/tailwindcss/releases/download/${TAILWIND_VERSION}/tailwindcss-linux-x64 -o /usr/local/bin/tailwindcss ;; \
-    aarch64) \
-        curl -L https://github.com/tailwindlabs/tailwindcss/releases/download/${TAILWIND_VERSION}/tailwindcss-linux-arm64 -o /usr/local/bin/tailwindcss ;; \
-    *) \
-        echo "Unsupported architecture: $(uname -m)" && exit 1 ;; \
+# Install architecture-specific Tailwind CSS binary
+RUN echo "Target platform: ${TARGETPLATFORM} (architecture: $(uname -m))" && \
+    case "${TARGETPLATFORM}" in \
+        "linux/amd64") TAILWIND_ARCH="linux-x64" ;; \
+        "linux/arm64") TAILWIND_ARCH="linux-arm64" ;; \
+        "linux/arm/v7") TAILWIND_ARCH="linux-arm64" ;; \
+        "linux/arm/v6") TAILWIND_ARCH="linux-arm64" ;; \
+        "linux/386") TAILWIND_ARCH="linux-x64" ;; \
+        *) TAILWIND_ARCH="linux-x64" ;; \
     esac && \
+    curl -L https://github.com/tailwindlabs/tailwindcss/releases/download/${TAILWIND_VERSION}/tailwindcss-${TAILWIND_ARCH} -o /usr/local/bin/tailwindcss && \
     chmod +x /usr/local/bin/tailwindcss
 
 WORKDIR /app
