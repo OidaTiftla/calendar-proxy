@@ -1,6 +1,6 @@
 services:
   app:
-    image: calendar-proxy:latest
+    image: ghcr.io/oidatiftla/calendar-proxy:latest
     build:
       context: .
       dockerfile: Dockerfile

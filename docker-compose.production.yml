@@ -1,6 +1,6 @@
 services:
   app:
-    image: calendar-proxy:latest
+    image: ghcr.io/oidatiftla/calendar-proxy:latest
     restart: unless-stopped
     expose:
       - 8000  # Assuming the app is behind a reverse proxy
