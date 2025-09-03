@@ -1,5 +1,5 @@
-# Build stage - for CSS generation only
-FROM python:3.13.7-slim AS builder
+# Build stage - for CSS generation only (forced to amd64 for tool availability)
+FROM --platform=linux/amd64 python:3.13.7-slim AS builder
 
 # Install build dependencies for Tailwind CSS
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -8,19 +8,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # Tailwind CSS version (renovate: datasource=github-releases depName=tailwindlabs/tailwindcss)
 ARG TAILWIND_VERSION=v4.1.12
-ARG TARGETPLATFORM
 
-# Install architecture-specific Tailwind CSS binary
-RUN echo "Target platform: ${TARGETPLATFORM} (architecture: $(uname -m))" && \
-    case "${TARGETPLATFORM}" in \
-        "linux/amd64") TAILWIND_ARCH="linux-x64" ;; \
-        "linux/arm64") TAILWIND_ARCH="linux-arm64" ;; \
-        "linux/arm/v7") TAILWIND_ARCH="linux-arm64" ;; \
-        "linux/arm/v6") TAILWIND_ARCH="linux-arm64" ;; \
-        "linux/386") TAILWIND_ARCH="linux-x64" ;; \
-        *) TAILWIND_ARCH="linux-x64" ;; \
-    esac && \
-    curl -L https://github.com/tailwindlabs/tailwindcss/releases/download/${TAILWIND_VERSION}/tailwindcss-${TAILWIND_ARCH} -o /usr/local/bin/tailwindcss && \
+# Install Tailwind CSS binary (always x64 since we're on amd64 platform)
+RUN curl -L https://github.com/tailwindlabs/tailwindcss/releases/download/${TAILWIND_VERSION}/tailwindcss-linux-x64 -o /usr/local/bin/tailwindcss && \
     chmod +x /usr/local/bin/tailwindcss
 
 WORKDIR /app
