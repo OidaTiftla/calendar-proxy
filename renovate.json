@@ -1,0 +1,22 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended"
+  ],
+
+  "reviewers": [
+    "OidaTiftla"
+  ],
+
+  "packageRules": [
+    {
+      "matchUpdateTypes": ["minor", "patch"],
+      "matchCurrentVersion": "!/^0/",
+      "ignoreTests": true,
+      "automerge": true
+    }
+  ],
+
+  "timezone": "Europe/Berlin",
+  "schedule": ["before 5am"]
+}

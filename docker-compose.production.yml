@@ -1,0 +1,40 @@
+services:
+  app:
+    image: calendar-proxy:latest
+    restart: unless-stopped
+    expose:
+      - 8000  # Assuming the app is behind a reverse proxy
+    environment:
+      # Required settings
+      # - PROXY_TOKENS=test-token-123,debug-token-456  # Should be set in .env; Generate it using: openssl rand -hex 40
+      # Optional settings
+      - ALLOWED_HOSTS=outlook.office365.com,calendar.google.com
+      - LOG_LEVEL=WARNING
+      - DISABLE_ACCESS_LOG=true
+    env_file: .env
+
+    # Security hardening
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+
+    # Temporary filesystems for read-only container
+    tmpfs:
+      - /tmp:noexec,nosuid,size=100m
+      - /var/tmp:noexec,nosuid,size=50m
+
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/healthz"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 5s

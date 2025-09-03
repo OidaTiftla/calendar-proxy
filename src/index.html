@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Calendar Proxy URL Builder</title>
+    <link rel="stylesheet" href="/static/style.css" />
+  </head>
+  <body class="bg-slate-900 text-slate-100 min-h-screen">
+    <main class="max-w-lg mx-auto px-4 py-8 sm:max-w-xl lg:max-w-2xl">
+      <header class="mb-8 text-center">
+        <h1 class="text-3xl font-bold text-cyan-400 mb-2">Calendar Proxy</h1>
+        <p class="text-slate-400 text-sm">
+          Generate subscription URLs for calendar feeds that require browser
+          headers.
+        </p>
+      </header>
+
+      <!-- Error display -->
+      <div
+        id="error-box"
+        class="hidden mb-6 p-4 bg-red-900 border border-red-700 rounded-lg"
+      >
+        <div class="flex items-center gap-2">
+          <svg
+            class="w-5 h-5 text-red-400 flex-shrink-0"
+            fill="currentColor"
+            viewBox="0 0 20 20"
+          >
+            <path
+              fill-rule="evenodd"
+              d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+              clip-rule="evenodd"
+            />
+          </svg>
+          <span id="error-text" class="text-red-200 text-sm"></span>
+        </div>
+      </div>
+
+      <form class="space-y-6" onsubmit="event.preventDefault(); buildUrl();">
+        <div class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-slate-300 mb-2"
+              >Token</label
+            >
+            <input
+              id="token"
+              type="text"
+              placeholder="your-secret-token"
+              class="w-full rounded-lg border-0 bg-slate-800 px-4 py-3 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+            />
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-slate-300 mb-2"
+              >Target URL</label
+            >
+            <input
+              id="target"
+              type="url"
+              placeholder="https://example.com/calendar.ics"
+              class="w-full rounded-lg border-0 bg-slate-800 px-4 py-3 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+            />
+          </div>
+        </div>
+
+        <details class="group">
+          <summary
+            class="cursor-pointer text-slate-400 text-sm hover:text-slate-300 transition-colors list-none [&::-webkit-details-marker]:hidden group-open:mb-2"
+          >
+            <span class="inline-flex items-center gap-2">
+              <svg
+                class="w-4 h-4 transition-transform group-open:rotate-90"
+                fill="currentColor"
+                viewBox="0 0 20 20"
+              >
+                <path
+                  fill-rule="evenodd"
+                  d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 111.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
+                  clip-rule="evenodd"
+                />
+              </svg>
+              Optional settings
+            </span>
+          </summary>
+          <div class="mt-4 space-y-4 pl-6 sm:pl-2">
+            <div>
+              <label class="block text-xs font-medium text-slate-400 mb-2"
+                >Calendar name</label
+              >
+              <input
+                id="name"
+                type="text"
+                placeholder="MyCalendar"
+                class="w-full rounded-lg border-0 bg-slate-800 px-4 py-3 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+              />
+              <p class="mt-1 text-xs text-slate-500">
+                Optional. Defaults to "calendar.ics"
+              </p>
+            </div>
+
+            <div>
+              <label class="block text-xs font-medium text-slate-400 mb-2"
+                >User-Agent</label
+              >
+              <div class="flex flex-col sm:flex-row gap-2">
+                <select
+                  id="uaPreset"
+                  class="flex-1 rounded-lg border-0 bg-slate-800 px-4 py-3 text-slate-100 focus:outline-none focus:ring-2 focus:ring-cyan-500 appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg xmlns=\"http://www.w3.org/2000/svg\" fill=\"none\" viewBox=\"0 0 20 20\"%3E%3Cpath stroke=\"%236b7280\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"1.5\" d=\"M6 8l4 4 4-4\"/%3E%3C/svg%3E')] bg-[length:1.5em_1.5em] bg-[right_0.5rem_center] bg-no-repeat pr-10"
+                >
+                  <option value="">Server default</option>
+                  <option
+                    value="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.6 Safari/605.1.15"
+                  >
+                    Safari Browser
+                  </option>
+                  <option value="custom">Custom...</option>
+                </select>
+                <input
+                  id="uaCustom"
+                  type="text"
+                  placeholder="Custom User-Agent"
+                  class="flex-1 rounded-lg border-0 bg-slate-800 px-4 py-3 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                />
+              </div>
+              <p class="mt-1 text-xs text-slate-500">
+                Custom input overrides preset selection
+              </p>
+            </div>
+
+            <div>
+              <label class="block text-xs font-medium text-slate-400 mb-2"
+                >Proxy base (detected)</label
+              >
+              <input
+                id="base"
+                type="text"
+                readonly
+                class="w-full rounded-lg border-0 bg-slate-700 px-4 py-3 text-slate-400 font-mono text-sm"
+              />
+            </div>
+          </div>
+        </details>
+
+        <div class="flex flex-col sm:flex-row items-center gap-3 pt-2">
+          <button
+            id="build"
+            type="submit"
+            class="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-lg bg-cyan-600 px-6 py-3 text-sm font-medium text-white hover:bg-cyan-700 focus:outline-none focus:ring-2 focus:ring-cyan-500 transition-colors"
+          >
+            <svg
+              class="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.102m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
+              />
+            </svg>
+            Generate URL
+          </button>
+          <button
+            id="clear"
+            type="button"
+            class="text-sm text-slate-500 hover:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-500 transition-colors"
+            onclick="clearForm()"
+          >
+            Clear all
+          </button>
+        </div>
+      </form>
+
+      <section class="mt-8">
+        <label class="block text-sm font-medium text-slate-300 mb-3"
+          >Subscription URL</label
+        >
+        <div class="flex flex-col sm:flex-row gap-3">
+          <input
+            id="out"
+            readonly
+            class="flex-1 rounded-lg border-0 bg-slate-800 px-4 py-3 text-sm font-mono text-slate-100"
+            placeholder="Generated URL will appear here"
+          />
+          <div class="flex gap-2">
+            <button
+              id="copy"
+              onclick="copyToClipboard()"
+              class="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-3 text-sm font-medium text-white hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-colors"
+            >
+              <svg
+                class="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+                />
+              </svg>
+              <span class="hidden sm:inline">Copy</span>
+            </button>
+            <a
+              id="open"
+              href="#"
+              class="hidden items-center gap-2 rounded-lg border border-slate-600 px-4 py-3 text-sm text-slate-300 hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-500 transition-colors"
+            >
+              <svg
+                class="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                />
+              </svg>
+              <span class="hidden sm:inline">Open</span>
+            </a>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      // Auto-populate base URL from current location
+      document.getElementById("base").value = window.location.origin;
+
+      // Show error in the error box
+      function showError(message) {
+        const errorBox = document.getElementById("error-box");
+        const errorText = document.getElementById("error-text");
+        errorText.textContent = message;
+        errorBox.classList.remove("hidden");
+        // Auto-hide after 5 seconds
+        setTimeout(() => {
+          errorBox.classList.add("hidden");
+        }, 5000);
+      }
+
+      // Hide error box
+      function hideError() {
+        const errorBox = document.getElementById("error-box");
+        errorBox.classList.add("hidden");
+      }
+
+      function clearForm() {
+        hideError();
+        document.getElementById("token").value = "";
+        document.getElementById("target").value = "";
+        if (document.getElementById("uaPreset"))
+          document.getElementById("uaPreset").value = "";
+        if (document.getElementById("uaCustom"))
+          document.getElementById("uaCustom").value = "";
+        document.getElementById("name").value = "";
+        document.getElementById("out").value = "";
+        document.getElementById("open").classList.add("hidden");
+      }
+
+      function copyToClipboard() {
+        const input = document.getElementById("out");
+        const text = input.value || input.textContent || "";
+        if (!text) {
+          showError("No URL to copy");
+          return;
+        }
+        navigator.clipboard &&
+          navigator.clipboard
+            .writeText(text)
+            .then(() => {
+              const button = document.getElementById("copy");
+              const original = button.innerHTML;
+              button.innerHTML = `
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                </svg>
+                <span class="hidden sm:inline">Copied!</span>
+              `;
+              setTimeout(() => (button.innerHTML = original), 2000);
+            })
+            .catch(() => {
+              // fallback
+              try {
+                input.select();
+                document.execCommand("copy");
+                showError("Copied using fallback method");
+              } catch {
+                showError("Failed to copy to clipboard");
+              }
+            });
+      }
+
+      function urlBase64UrlEncode(str) {
+        // UTF-8 -> base64url without padding
+        const utf8 = new TextEncoder().encode(str);
+        let binary = "";
+        const chunkSize = 0x8000;
+        for (let i = 0; i < utf8.length; i += chunkSize) {
+          binary += String.fromCharCode.apply(
+            null,
+            Array.from(utf8.slice(i, i + chunkSize))
+          );
+        }
+        let b64 = btoa(binary);
+        b64 = b64.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+        return b64;
+      }
+
+      function buildUrl() {
+        hideError();
+
+        const base = document.getElementById("base").value.trim();
+        const token = document.getElementById("token").value.trim();
+        const target = document.getElementById("target").value.trim();
+
+        // Validation
+        if (!token) {
+          showError("Token is required");
+          return;
+        }
+
+        if (!target) {
+          showError("Target URL is required");
+          return;
+        }
+
+        // Validate target URL
+        try {
+          new URL(target);
+        } catch {
+          showError("Target URL is not valid");
+          return;
+        }
+
+        // Determine UA from custom input or preset
+        const uaPreset =
+          (document.getElementById("uaPreset") &&
+            document.getElementById("uaPreset").value) ||
+          "";
+        const uaCustom =
+          (document.getElementById("uaCustom") &&
+            document.getElementById("uaCustom").value.trim()) ||
+          "";
+        let ua = "";
+        if (uaCustom) ua = uaCustom;
+        else if (uaPreset && uaPreset !== "custom") ua = uaPreset;
+
+        // Calendar name: default to 'calendar.ics' if empty; ensure single .ics suffix
+        let rawName = document.getElementById("name").value.trim();
+        let name = rawName ? rawName : "calendar.ics";
+        name = name.replace(/[\/\\]/g, "_");
+        if (!name.toLowerCase().endsWith(".ics")) name = name + ".ics";
+
+        const outEl = document.getElementById("out");
+        const openEl = document.getElementById("open");
+
+        const baseClean = base.replace(/\/$/, "");
+        const b64 = urlBase64UrlEncode(target);
+        name = name.replace(/[\/\\]/g, "_");
+
+        let url = `${baseClean}/sub/${encodeURIComponent(
+          token
+        )}/${b64}/${encodeURIComponent(name)}`;
+        if (ua) url += `?ua=${encodeURIComponent(ua)}`;
+
+        outEl.value = url;
+        openEl.href = url;
+        openEl.classList.remove("hidden");
+        openEl.classList.add("inline-flex");
+      }
+
+      // Handle User-Agent preset selection
+      const uaPresetEl = document.getElementById("uaPreset");
+      if (uaPresetEl) {
+        uaPresetEl.addEventListener("change", function () {
+          const customInput = document.getElementById("uaCustom");
+          if (this.value === "custom" && customInput) {
+            customInput.focus();
+          }
+        });
+      }
+
+      document.getElementById("build").addEventListener("click", (e) => {
+        e.preventDefault();
+        buildUrl();
+      });
+    </script>
+  </body>
+</html>
