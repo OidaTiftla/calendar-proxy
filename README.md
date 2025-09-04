@@ -144,6 +144,7 @@ Open `http://<host>:8000/` in a browser to use the included `index.html` UI for 
 
 - `GET /sub/{token}/{b64url}/{name}.ics` — subscription proxy endpoint.
 - `GET /healthz` — health check JSON response.
+- `GET /version` — version information JSON response (includes version, build date, and commit).
 - `GET /` — web UI for building calendar subscription URLs.
 - `GET /static/{path}` — static files (CSS, etc.) for the web UI.
 

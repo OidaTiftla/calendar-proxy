@@ -22,6 +22,26 @@ RUN mkdir -p static && tailwindcss -i ./input.css --content ./index.html -o ./st
 # Runtime stage - minimal Python environment
 FROM python:3.13.7-slim AS runtime
 
+# Build arguments for metadata
+ARG VERSION=dev
+ARG BUILD_DATE
+ARG COMMIT
+
+# OCI Image Labels for better metadata
+LABEL org.opencontainers.image.title="Calendar Proxy" \
+      org.opencontainers.image.description="A secure proxy service that makes browser-only calendar links (like Office 365 shared calendars) accessible to calendar clients that can't authenticate or handle custom headers" \
+      org.opencontainers.image.version="${VERSION}" \
+      org.opencontainers.image.created="${BUILD_DATE}" \
+      org.opencontainers.image.revision="${COMMIT}" \
+      org.opencontainers.image.vendor="OidaTiftla" \
+      org.opencontainers.image.licenses="MIT" \
+      org.opencontainers.image.source="https://github.com/OidaTiftla/calendar-proxy"
+
+# Set environment variables for runtime access
+ENV APP_VERSION=${VERSION} \
+    APP_BUILD_DATE=${BUILD_DATE} \
+    APP_COMMIT=${COMMIT}
+
 # Create non-root user for security
 RUN groupadd --gid 1000 appuser && \
     useradd --uid 1000 --gid appuser --shell /bin/bash --create-home appuser

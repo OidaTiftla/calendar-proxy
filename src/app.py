@@ -96,7 +96,16 @@ app = FastAPI(title="Stateless Calendar Proxy")
 @app.on_event("startup")
 async def startup_event():
     """Initialize any startup tasks."""
+    # Get version info from environment variables
+    version = os.getenv("APP_VERSION", "dev")
+    build_date = os.getenv("APP_BUILD_DATE", "unknown")
+    commit = os.getenv("APP_COMMIT", "unknown")
+
     logging.info("Calendar Proxy starting up")
+    logging.info(f"Version: {version}")
+    logging.info(f"Build Date: {build_date}")
+    logging.info(f"Commit: {commit}")
+
     # Do initial cleanup of in-memory rate limiter
     if not redis_client:
         await _cleanup_inmem_limits()
@@ -375,13 +384,37 @@ def health():
     return {"status": "ok"}
 
 
+@app.get("/version")
+def version():
+    """Get version information"""
+    return {
+        "version": os.getenv("APP_VERSION", "dev"),
+        "build_date": os.getenv("APP_BUILD_DATE", "unknown"),
+        "commit": os.getenv("APP_COMMIT", "unknown")
+    }
+
+
 # Serve a small static index.html UI if present (file saved alongside app)
 @app.get("/", response_class=HTMLResponse)
 async def index():
     try:
         here = os.path.dirname(__file__)
         with open(os.path.join(here, "index.html"), "r", encoding="utf-8") as f:
-            return HTMLResponse(f.read())
+            html_content = f.read()
+
+        # Replace placeholders with actual version information
+        version = os.getenv("APP_VERSION", "dev")
+        build_date = os.getenv("APP_BUILD_DATE", "unknown")
+        commit = os.getenv("APP_COMMIT", "unknown")
+
+        # Truncate commit to 8 characters if it's not 'unknown'
+        commit_display = commit[:8] if commit != 'unknown' else commit
+
+        html_content = html_content.replace("{{APP_VERSION}}", version)
+        html_content = html_content.replace("{{APP_BUILD_DATE}}", build_date)
+        html_content = html_content.replace("{{APP_COMMIT}}", commit_display)
+
+        return HTMLResponse(html_content)
     except FileNotFoundError:
         return PlainTextResponse("Index not found", status_code=404)
 
