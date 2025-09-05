@@ -8,7 +8,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # Tailwind CSS version
 # renovate: datasource=github-releases depName=tailwindlabs/tailwindcss
-ARG TAILWIND_VERSION=v4.1.12
+ARG TAILWIND_VERSION=v4.1.13
 
 # Install Tailwind CSS binary (always x64 since we're on amd64 platform)
 RUN curl -L https://github.com/tailwindlabs/tailwindcss/releases/download/${TAILWIND_VERSION}/tailwindcss-linux-x64 -o /usr/local/bin/tailwindcss && \
