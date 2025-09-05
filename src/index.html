@@ -411,6 +411,30 @@
         e.preventDefault();
         buildUrl();
       });
+
+      // Clear generated URL when any input changes
+      function clearGeneratedUrl() {
+        document.getElementById("out").value = "";
+        document.getElementById("open").classList.add("hidden");
+        document.getElementById("open").classList.remove("inline-flex");
+      }
+
+      // Add event listeners to all form inputs
+      const inputs = [
+        "token",
+        "target",
+        "name",
+        "uaPreset",
+        "uaCustom"
+      ];
+
+      inputs.forEach(id => {
+        const element = document.getElementById(id);
+        if (element) {
+          element.addEventListener("input", clearGeneratedUrl);
+          element.addEventListener("change", clearGeneratedUrl);
+        }
+      });
     </script>
   </body>
 </html>
