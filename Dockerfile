@@ -6,7 +6,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-# Tailwind CSS version (renovate: datasource=github-releases depName=tailwindlabs/tailwindcss)
+# Tailwind CSS version
+# renovate: datasource=github-releases depName=tailwindlabs/tailwindcss
 ARG TAILWIND_VERSION=v4.1.12
 
 # Install Tailwind CSS binary (always x64 since we're on amd64 platform)
