@@ -4,7 +4,7 @@ FROM --platform=linux/amd64 node:22.19.0-alpine AS builder
 WORKDIR /app
 
 # Install Tailwind CSS v4 following official documentation
-RUN npm install tailwindcss @tailwindcss/cli
+RUN npm install tailwindcss@4.1.12 @tailwindcss/cli@4.1.12
 
 # Build Tailwind CSS
 COPY src/index.html src/input.css ./
