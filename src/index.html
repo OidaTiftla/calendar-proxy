@@ -241,73 +241,87 @@
     </main>
 
     <script>
+      // Helper function for element selection
+      const $ = (id) => document.getElementById(id);
+
       // Auto-populate base URL from current location
-      document.getElementById("base").value = window.location.origin;
+      $("base").value = window.location.origin;
 
       // Show error in the error box
       function showError(message) {
-        const errorBox = document.getElementById("error-box");
-        const errorText = document.getElementById("error-text");
+        const errorBox = $("error-box");
+        const errorText = $("error-text");
         errorText.textContent = message;
         errorBox.classList.remove("hidden");
         // Auto-hide after 5 seconds
-        setTimeout(() => {
-          errorBox.classList.add("hidden");
-        }, 5000);
+        setTimeout(() => errorBox.classList.add("hidden"), 5000);
       }
 
       // Hide error box
       function hideError() {
-        const errorBox = document.getElementById("error-box");
-        errorBox.classList.add("hidden");
+        $("error-box").classList.add("hidden");
       }
 
       function clearForm() {
         hideError();
-        document.getElementById("token").value = "";
-        document.getElementById("target").value = "";
-        if (document.getElementById("uaPreset"))
-          document.getElementById("uaPreset").value = "";
-        const uaCustom = document.getElementById("uaCustom");
+
+        // Clear main form fields
+        ["token", "target", "name"].forEach((id) => ($(id).value = ""));
+
+        // Reset user agent preset
+        const uaPreset = $("uaPreset");
+        if (uaPreset) uaPreset.value = "";
+
+        // Clear and hide custom user agent
+        const uaCustom = $("uaCustom");
         if (uaCustom) {
           uaCustom.value = "";
           uaCustom.classList.add("hidden");
         }
-        document.getElementById("name").value = "";
+
         clearGeneratedUrl();
       }
 
       function copyToClipboard() {
-        const input = document.getElementById("out");
+        const input = $("out");
         const text = input.value || input.textContent || "";
         if (!text) {
           showError("No URL to copy");
           return;
         }
-        navigator.clipboard &&
+
+        const updateButton = (content, duration = 2000) => {
+          const button = $("copy");
+          const original = button.innerHTML;
+          button.innerHTML = content;
+          setTimeout(() => (button.innerHTML = original), duration);
+        };
+
+        const successContent = `
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+          </svg>
+          <span class="hidden sm:inline">Copied!</span>
+        `;
+
+        if (navigator.clipboard) {
           navigator.clipboard
             .writeText(text)
-            .then(() => {
-              const button = document.getElementById("copy");
-              const original = button.innerHTML;
-              button.innerHTML = `
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                </svg>
-                <span class="hidden sm:inline">Copied!</span>
-              `;
-              setTimeout(() => (button.innerHTML = original), 2000);
-            })
-            .catch(() => {
-              // fallback
-              try {
-                input.select();
-                document.execCommand("copy");
-                showError("Copied using fallback method");
-              } catch {
-                showError("Failed to copy to clipboard");
-              }
-            });
+            .then(() => updateButton(successContent))
+            .catch(() => fallbackCopy());
+        } else {
+          fallbackCopy();
+        }
+
+        function fallbackCopy() {
+          try {
+            input.select();
+            document.execCommand("copy");
+            updateButton(successContent);
+          } catch {
+            showError("Failed to copy to clipboard");
+          }
+        }
       }
 
       function urlBase64UrlEncode(str) {
@@ -329,60 +343,42 @@
       function buildUrl() {
         hideError();
 
-        const base = document.getElementById("base").value.trim();
-        const token = document.getElementById("token").value.trim();
-        const target = document.getElementById("target").value.trim();
+        const base = $("base").value.trim();
+        const token = $("token").value.trim();
+        const target = $("target").value.trim();
 
         // Validation
-        if (!token) {
-          showError("Token is required");
-          return;
-        }
-
-        if (!target) {
-          showError("Target URL is required");
-          return;
-        }
+        if (!token) return showError("Token is required");
+        if (!target) return showError("Target URL is required");
 
         // Validate target URL
         try {
           new URL(target);
         } catch {
-          showError("Target URL is not valid");
-          return;
+          return showError("Target URL is not valid");
         }
 
-        // Determine UA from custom input or preset
-        const uaPreset =
-          (document.getElementById("uaPreset") &&
-            document.getElementById("uaPreset").value) ||
-          "";
-        const uaCustom =
-          (document.getElementById("uaCustom") &&
-            document.getElementById("uaCustom").value.trim()) ||
-          "";
-        let ua = "";
-        if (uaCustom) ua = uaCustom;
-        else if (uaPreset && uaPreset !== "custom") ua = uaPreset;
+        // Determine User-Agent
+        const uaPreset = $("uaPreset")?.value || "";
+        const uaCustom = $("uaCustom")?.value.trim() || "";
+        const ua = uaCustom || (uaPreset !== "custom" ? uaPreset : "");
 
-        // Calendar name: default to 'calendar.ics' if empty; ensure single .ics suffix
-        let rawName = document.getElementById("name").value.trim();
-        let name = rawName ? rawName : "calendar.ics";
+        // Process calendar name
+        let name = $("name").value.trim() || "calendar.ics";
         name = name.replace(/[\/\\]/g, "_");
-        if (!name.toLowerCase().endsWith(".ics")) name = name + ".ics";
+        if (!name.toLowerCase().endsWith(".ics")) name += ".ics";
 
-        const outEl = document.getElementById("out");
-        const openEl = document.getElementById("open");
-
+        // Build URL
         const baseClean = base.replace(/\/$/, "");
         const b64 = urlBase64UrlEncode(target);
-        name = name.replace(/[\/\\]/g, "_");
-
         let url = `${baseClean}/sub/${encodeURIComponent(
           token
         )}/${b64}/${encodeURIComponent(name)}`;
         if (ua) url += `?ua=${encodeURIComponent(ua)}`;
 
+        // Update UI
+        const outEl = $("out");
+        const openEl = $("open");
         outEl.value = url;
         openEl.href = url;
         openEl.classList.remove("hidden");
@@ -390,45 +386,38 @@
       }
 
       // Handle User-Agent preset selection
-      const uaPresetEl = document.getElementById("uaPreset");
+      const uaPresetEl = $("uaPreset");
       if (uaPresetEl) {
         uaPresetEl.addEventListener("change", function () {
-          const customInput = document.getElementById("uaCustom");
-          if (customInput) {
-            if (this.value === "custom") {
-              customInput.classList.remove("hidden");
-              customInput.focus();
-            } else {
-              customInput.classList.add("hidden");
-              customInput.value = ""; // Clear the custom input when not selected
-            }
+          const customInput = $("uaCustom");
+          if (!customInput) return;
+
+          if (this.value === "custom") {
+            customInput.classList.remove("hidden");
+            customInput.focus();
+          } else {
+            customInput.classList.add("hidden");
+            customInput.value = "";
           }
         });
       }
 
-      document.getElementById("build").addEventListener("click", (e) => {
+      $("build").addEventListener("click", (e) => {
         e.preventDefault();
         buildUrl();
       });
 
       // Clear generated URL when any input changes
       function clearGeneratedUrl() {
-        document.getElementById("out").value = "";
-        document.getElementById("open").classList.add("hidden");
-        document.getElementById("open").classList.remove("inline-flex");
+        $("out").value = "";
+        const openEl = $("open");
+        openEl.classList.add("hidden");
+        openEl.classList.remove("inline-flex");
       }
 
       // Add event listeners to all form inputs
-      const inputs = [
-        "token",
-        "target",
-        "name",
-        "uaPreset",
-        "uaCustom"
-      ];
-
-      inputs.forEach(id => {
-        const element = document.getElementById(id);
+      ["token", "target", "name", "uaPreset", "uaCustom"].forEach((id) => {
+        const element = $(id);
         if (element) {
           element.addEventListener("input", clearGeneratedUrl);
           element.addEventListener("change", clearGeneratedUrl);
