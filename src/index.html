@@ -120,7 +120,7 @@
                   id="uaCustom"
                   type="text"
                   placeholder="Custom User-Agent"
-                  class="flex-1 rounded-lg border-0 bg-slate-800 px-4 py-3 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                  class="hidden flex-1 rounded-lg border-0 bg-slate-800 px-4 py-3 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500"
                 />
               </div>
               <p class="mt-1 text-xs text-slate-500">
@@ -268,8 +268,11 @@
         document.getElementById("target").value = "";
         if (document.getElementById("uaPreset"))
           document.getElementById("uaPreset").value = "";
-        if (document.getElementById("uaCustom"))
-          document.getElementById("uaCustom").value = "";
+        const uaCustom = document.getElementById("uaCustom");
+        if (uaCustom) {
+          uaCustom.value = "";
+          uaCustom.classList.add("hidden");
+        }
         document.getElementById("name").value = "";
         document.getElementById("out").value = "";
         document.getElementById("open").classList.add("hidden");
@@ -392,8 +395,14 @@
       if (uaPresetEl) {
         uaPresetEl.addEventListener("change", function () {
           const customInput = document.getElementById("uaCustom");
-          if (this.value === "custom" && customInput) {
-            customInput.focus();
+          if (customInput) {
+            if (this.value === "custom") {
+              customInput.classList.remove("hidden");
+              customInput.focus();
+            } else {
+              customInput.classList.add("hidden");
+              customInput.value = ""; // Clear the custom input when not selected
+            }
           }
         });
       }
