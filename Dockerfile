@@ -1,24 +1,14 @@
-# Build stage - for CSS generation only (forced to amd64 for tool availability)
-FROM --platform=linux/amd64 python:3.13.7-slim AS builder
-
-# Install build dependencies for Tailwind CSS
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    curl ca-certificates \
-    && rm -rf /var/lib/apt/lists/*
-
-# Tailwind CSS version
-# renovate: datasource=github-releases depName=tailwindlabs/tailwindcss
-ARG TAILWIND_VERSION=v4.1.13
-
-# Install Tailwind CSS binary (always x64 since we're on amd64 platform)
-RUN curl -L https://github.com/tailwindlabs/tailwindcss/releases/download/${TAILWIND_VERSION}/tailwindcss-linux-x64 -o /usr/local/bin/tailwindcss && \
-    chmod +x /usr/local/bin/tailwindcss
+# Build stage - for CSS generation using Node.js and Tailwind CLI
+FROM --platform=linux/amd64 node:22.19.0-alpine AS builder
 
 WORKDIR /app
 
+# Install Tailwind CSS v4 following official documentation
+RUN npm install tailwindcss @tailwindcss/cli
+
 # Build Tailwind CSS
 COPY src/index.html src/input.css ./
-RUN mkdir -p static && tailwindcss -i ./input.css --content ./index.html -o ./static/style.css --minify
+RUN mkdir -p static && npx @tailwindcss/cli -i ./input.css --content ./index.html -o ./static/style.css --minify
 
 # Runtime stage - minimal Python environment
 FROM python:3.13.7-slim AS runtime
