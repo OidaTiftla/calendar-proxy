@@ -4,9 +4,9 @@ FROM --platform=linux/amd64 node:22.20.0-alpine AS builder
 WORKDIR /app
 
 # renovate: datasource=npm depName=tailwindcss
-ARG TAILWINDCSS_VERSION=4.1.13
+ARG TAILWINDCSS_VERSION=4.1.14
 # renovate: datasource=npm depName=@tailwindcss/cli
-ARG TAILWINDCSS_CLI_VERSION=4.1.13
+ARG TAILWINDCSS_CLI_VERSION=4.1.14
 
 # Install Tailwind CSS v4 following official documentation
 RUN npm install tailwindcss@${TAILWINDCSS_VERSION} @tailwindcss/cli@${TAILWINDCSS_CLI_VERSION}
