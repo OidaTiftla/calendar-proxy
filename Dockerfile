@@ -16,7 +16,7 @@ COPY src/index.html src/input.css ./
 RUN mkdir -p static && npx @tailwindcss/cli -i ./input.css --content ./index.html -o ./static/style.css --minify
 
 # Runtime stage - minimal Python environment
-FROM python:3.13.7-slim AS runtime
+FROM python:3.14.3-slim AS runtime
 
 # Build arguments for metadata
 ARG VERSION=dev
