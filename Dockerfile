@@ -1,5 +1,5 @@
 # Build stage - for CSS generation using Node.js and Tailwind CLI
-FROM --platform=linux/amd64 node:22.22.2-alpine AS builder
+FROM --platform=linux/amd64 node:24.15.0-alpine AS builder
 
 WORKDIR /app
 
